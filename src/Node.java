@@ -18,8 +18,6 @@ public class Node extends Thread{
 	private int seqNum = -1;
 	private int N;
 	List<Integer> list;
-	private int last;
-	private int first = 0;
 
 	private Socket leftSocket;
 	private PrintWriter leftOut;
@@ -98,89 +96,172 @@ public class Node extends Thread{
 				list.add(scan.nextInt());
 			}
 			print("Received: " + listToString());
-			// set handy dandy variables for list index positions
-			first = 0;
-			last = list.size() - 1;
-
 
 			// start sorting woooo.  
 			//---------------------
 			Collections.sort(list);
 
-
 			boolean swapHappened = false;
 			boolean done = false;
 
-			// first node starts it off
-			if(seqNum == 0){
-				int sent = list.remove(last);
-				rightOut.println(sent + " " + swapHappened);
-			}
-			
-			
 			while(!done){
-				// upwards pass
-				//-------------
+				// 1. the upwards pass
+				//=====================
+				
+				// 1a. receive highest from left, send reply
+				//------------------------------------------
 				if(seqNum != 0){ // the first node has already passed up
+					
 					scan = new Scanner(leftIn.readLine());
 
-					// check for exit signal, and pass on if so
+					// check for exit signal
 					if(!scan.hasNextInt()){ 
+						print("1a. received done signal from node" + (seqNum - 1));
 						done = true;
-						rightOut.println("d");
-						break;
+						if(seqNum < N-1){ // pass on if not at the end
+							rightOut.println("d");
+						}
+						continue;
 					}
 
-					// get the bubbled up highest value
+					// receive bubbled up highest value from left
 					int received = scan.nextInt();
 					swapHappened = scan.nextBoolean();
-					list.add(received);
-					Collections.sort(list);
-
-					// swap it for your lowest
-					int sent = list.remove(first);
-					leftOut.println(sent + "");
-
-					// the node at the end can tell if complete!
-					if(seqNum == N - 1 && !swapHappened){
-						done = true;
-						leftOut.println("d");
-						break;
+					
+					print(String.format("1a. received %d %b from node%d.", received, swapHappened, (seqNum-1)));
+					
+					// if will swap
+					if(received > list.get(0)){ 
+						swapHappened = true;
+						int sent = list.remove(0);  // swap for your lowest
+						leftOut.println(sent + ""); // send reply
+							
+						print(String.format("1b. sendng reply %d to node%d, swap.", sent, (seqNum-1)));
+						
+						list.add(received);
+						Collections.sort(list);  // sort my array again
 					}
-
+					// otherwise no swap
+					else {
+						print(String.format("1b. sending reply %d to node%d, no swap.", received, (seqNum-1)));
+						leftOut.println(received + ""); // send reply
+					}
+					
+				}	
+		
+				// 1b. send highest right, receive reply
+				//--------------------------------------
+				if(seqNum < N - 1){ // all except the last node
+					// send highest value right
+					int sent = list.remove(list.size() - 1);
+					rightOut.println(sent + " " + swapHappened);
+					
+					print(String.format("1c. sending %d %b to node%d, awaiting reply.", sent, swapHappened, (seqNum+1)));
+					
+					// receive lowest value reply from right
+					scan = new Scanner(rightIn.readLine());
+					int received = scan.nextInt();
+					list.add(list.size()-1, received); // add to the end
+					if(sent != received){
+						Collections.sort(list); // sort if received a new value
+					}
+					
+					print(String.format("1d. received %d from node%d.", received, (seqNum+1)));
 				}
 
-				// downwards pass
-				//---------------
+				// At the top - see if sorted
+				//===========================
+				// the node at the end can tell if complete!
+				if(seqNum == N - 1 && !swapHappened){
+					print("at the top, sort is complete. Sending message down.");
+					done = true;
+					leftOut.println("d");
+					continue;
+				}	
+				
+				// reset
+				swapHappened = false;
+
+				// 2. downwards pass
+				//==================
+				
+				// 2a. receive lowest from right, send reply right
+				//------------------------------------------------
 				if(seqNum != N - 1){ // the last node has already passed down
 					scan = new Scanner(rightIn.readLine());
 
-					// check for exit signal, and pass on if so
+					// check for exit signal
 					if(!scan.hasNextInt()){ 
+						print("2a. received done signal from node" + (seqNum+1));
 						done = true;
-						leftOut.println("d");
-						break;
+						if(seqNum > 0){ // pass on if not the start node
+							leftOut.println("d");
+						}
+						continue;
 					}
 
-					// get the bubbled down lowest value
+					// receive lowest value from right
 					int received = scan.nextInt();
 					swapHappened = scan.nextBoolean();
-					list.add(received);
-					Collections.sort(list);
+					
+					print(String.format("2a. received %d %b from node%d.", received, swapHappened, (seqNum+1)));
 
-					// swap it for your lowest
-					int sent = list.remove(last);
-					leftOut.println(sent + "");
-
-					// the node at the start can tell if complete!
-					if(seqNum == 0 && !swapHappened){
-						done = true;
-						rightOut.println("d");
-						break;
+					// if will swap
+					if(received < list.get(list.size()-1)){ 
+						swapHappened = true;
+						int sent = list.remove(list.size()-1); // swap for your highest
+						rightOut.println(sent + ""); // send reply
+						
+						print(String.format("2b. sendng reply %d to node%d, swap.", sent, (seqNum+1)));
+						
+						list.add(received); 
+						Collections.sort(list);  // sort my array again
+					}
+					// otherwise no swap
+					else {
+						rightOut.println(received + ""); // send reply
+						print(String.format("2b. sending reply %d to node%d, no swap.", received, (seqNum+1)));
 					}
 				}
+				
+				// 2b. send lowest left and wait for a reply from left
+				//----------------------------------------------------
+				if(seqNum != 0){ // all except the first node
+					// send lowest value left
+					int sent = list.remove(0);
+					leftOut.println(sent + " " + swapHappened);
+					
+					print(String.format("2c. sending %d %b to node%d, awaiting reply.", sent, swapHappened, (seqNum-1)));
+					
+					// receive highest value reply from left
+					scan = new Scanner(leftIn.readLine());
+					int received = scan.nextInt();
+					list.add(0, received); // put at start
+					if(sent != received){
+						Collections.sort(list); // sort if we received a different value
+					}
+					
+					print(String.format("2d. received %d from node%d.", received, (seqNum-1)));
+				}
+				
+				
+				// At the bottom - see if sorted
+				//==============================
+				// the node at the start can tell if complete!
+				if(seqNum == 0 && !swapHappened){
+					print("at the bottom, sort is complete. Sending message up.");
+					done = true;
+					rightOut.println("d");
+					continue;
+				}
+				
+				// reset
+				swapHappened = false;
 			}
-
+			
+			// print results for now
+			print("Partial answer: " + listToString());
+			
 		} catch (Exception e){
 			e.printStackTrace();
 		} finally{
