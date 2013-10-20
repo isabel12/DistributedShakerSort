@@ -115,8 +115,9 @@ public class Main {
 			averageNode = averageNode / numRepeats;
 			
 			System.out.println("N: " + N);
-			System.out.println("master time: " + averageTotal + "ms");
-			System.out.println("node time: " + averageNode + "ms");
+			System.out.println("array sending: " + (averageTotal - averageNode) + "ms");
+			System.out.println("sort time: " + averageNode + "ms");
+			System.out.println("total: " + averageTotal + "ms");
 			System.out.println();
 		}
 	}
@@ -129,11 +130,11 @@ public class Main {
 		
 		int[] NToTest = {1,2,3,4,5}; // values of N to test at
 		
-//		runTest(20, NToTest, 5);
-//		runTest(200, NToTest, 5);
-//		runTest(2000, NToTest, 5);
-//		runTest(10000, NToTest, 5);
-//		runTest(20000, NToTest, 5);
+		runTest(20, NToTest, 5);
+		runTest(200, NToTest, 5);
+		runTest(2000, NToTest, 5);
+		runTest(10000, NToTest, 5);
+		runTest(20000, NToTest, 5);
 		runTest(40000, NToTest, 5);
 	}
 }
