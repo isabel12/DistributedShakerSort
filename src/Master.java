@@ -4,25 +4,42 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Scanner;
 
 
 public class Master extends Thread{
-
-	ServerSocket serverSocket;
+	boolean debuggingOn;
+	
 	int[] toSort;
+	String[] nodeResults;
+	String resultString;
+	int[] result;
+	
+	long startTime;
+	long timeTakenMillis;
+	long longestNodeTime;
+	
 	int N = 0;
 	int portnumber = 4444;
 	
+	ServerSocket serverSocket;
 	Socket[] nodeSockets;
 	int[] nodePortnumbers;
 	String[] nodeHostnames;
 	PrintWriter[] nodeOut;
 	BufferedReader[] nodeIn; 
 	
-	
-	public Master(int n, int portnumber, int[] toSort){
+	/**
+	 * @param n - must be less than or equal to the size of the 'toSort' array.
+	 * @param portnumber
+	 * @param toSort
+	 */
+	public Master(int n, int portnumber, int[] toSort, boolean debuggingOn){
+		this.debuggingOn = debuggingOn;
 		this.toSort = toSort;
 		this.N = n;
+		this.result = new int[N];
+		this.nodeResults = new String[N];
 		this.portnumber = portnumber;
 		this.nodeSockets = new Socket[N];
 		this.nodeOut = new PrintWriter[N];
@@ -38,14 +55,14 @@ public class Master extends Thread{
 			// receive node connections
 			int numConnected = 0;
 			while(numConnected < N){
-				System.out.println("Waiting for " + (N - numConnected) + " nodes to connect...");
+				print("Waiting for " + (N - numConnected) + " nodes to connect...");
 				nodeSockets[numConnected] = serverSocket.accept();
 				nodeOut[numConnected] = new PrintWriter(nodeSockets[numConnected].getOutputStream(), true);
 				nodeIn[numConnected] = new BufferedReader(new InputStreamReader(nodeSockets[numConnected].getInputStream()));
 				nodePortnumbers[numConnected] = Integer.parseInt(nodeIn[numConnected].readLine()); // wait for the node to tell me their serverSocket portnumber
 				nodeHostnames[numConnected] = nodeIn[numConnected].readLine().trim(); // wait for the node to tell me their hostname
 				numConnected++;
-				System.out.println("Received connection!");
+				print("Received connection!");
 			}
 			
 			// tell all nodes about their seqNum and N
@@ -56,14 +73,57 @@ public class Master extends Thread{
 			
 			// tell all nodes about right neighbours
 			for(int i = 0; i < N - 1; i++){
-				System.out.println("Telling node " + i + " about right neighbour.");
+				print("Telling node " + i + " about right neighbour.");
 				String toSend = String.format("%d %s", nodePortnumbers[i+1], nodeHostnames[i+1]);
 				nodeOut[i].println(toSend);
 			}
 			
 			// initiate sort
 			sort();
+				
+			// wait for results		
+			int numResults = 0;
+			while(numResults < N){
+				print("Waiting for " + (N - numResults) + " nodes to respond...");
+				Socket socket = serverSocket.accept();
+				BufferedReader nodeIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				PrintWriter nodeOut = new PrintWriter(socket.getOutputStream(), true);
+				
+				
+				// find out which node it is
+				int seqNum = Integer.parseInt(nodeIn.readLine());
+				
+				// get their result
+				String result = nodeIn.readLine();
+				nodeResults[seqNum] = result;
+				
+				// get how long it took
+				long time = Long.parseLong(nodeIn.readLine());
+				if(time > longestNodeTime){
+					longestNodeTime = time;
+				}
+						
+				// send reply
+				nodeOut.println();
+				
+				numResults++;
+				print("Received result from node" + seqNum);
+
+			}
 			
+			// compile results
+			resultString = "";
+			for(int i = 0; i < N; i++){
+				resultString += nodeResults[i];
+			}
+			
+			Scanner scan = new Scanner(resultString);
+			int index = 0;
+			while(scan.hasNext()){
+				this.result[index] = Integer.parseInt(scan.next());
+			}
+			
+			timeTakenMillis = System.currentTimeMillis() - startTime;				
 			
 		} catch (Exception e){
 			e.printStackTrace();
@@ -74,17 +134,41 @@ public class Master extends Thread{
 				for(Socket s: nodeSockets){
 					s.close();
 				}
-				
 			} catch (IOException e) {
-
 				e.printStackTrace();
 			}
 		}
 	}
 	
+	/**
+	 * Time taken to complete the sort from master's perspective.
+	 * @return
+	 */
+	public long getTimeTaken(){
+		return this.timeTakenMillis;
+	}
 	
-	public void sort(){
-		System.out.println("Initiating sort");
+	/**
+	 * The longest recorded time taken for any node to perform only the 'sort' section of code.
+	 * @return
+	 */
+	public long getLongestNodeTime(){
+		return this.longestNodeTime;
+	}
+	
+	public int[] getResultArray(){
+		return this.result;
+	}
+	
+	public String getResultString(){
+		return this.resultString;
+	}
+	
+	/**
+	 * Initiates the sort.  First splits the array, then sends each section to each node.
+	 */
+	private void sort(){
+		print("Initiating sort...");
 		
 		int[] nodeSizes = new int[N];
 		
@@ -98,6 +182,7 @@ public class Master extends Thread{
 			}
 		}
 		
+		startTime = System.currentTimeMillis();
 		
 		// pass each node their bit of the array
 		int p = 0;
@@ -112,13 +197,16 @@ public class Master extends Thread{
 			while(p < end){
 				array += toSort[p++] + " ";				
 			}
-			array.trim();
 			
 			// send it
 			nodeOut[i].println(array);
 		}
-
-		
+	}
+	
+	private void print(String s){	
+		if(debuggingOn){
+			System.out.println("master: " + s);
+		}
 	}
 		
 }
