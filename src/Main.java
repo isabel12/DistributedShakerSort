@@ -101,7 +101,7 @@ public class Main {
 		long averageNode = 0;
 		for(int N: sizesOfNToTest){
 			for(int i = 0; i < numRepeats; i++){
-				start(toSort, N, false);
+				start(toSort, N, true);
 				averageTotal += timeTakenTotal;
 				averageNode += longestNodeTime;	
 			}
@@ -123,7 +123,7 @@ public class Main {
 	public static void main(String[] args){
 		// defaults
 		int arraySize = 5;
-		int[] NToTest = {1,2,3,4,5}; // values of N to test at
+		int[] NToTest = {3};//{1,2,3,4,5}; // values of N to test at
 //		
 //		if(args.length > 0){
 //			arraySize = Integer.parseInt(args[0]);
@@ -139,7 +139,7 @@ public class Main {
 		
 		
 		
-		runTest(20, NToTest, 5);
+		runTest(5, NToTest, 1);
 //		runTest(200, NToTest, 5);
 //		runTest(2000, NToTest, 5);
 //		runTest(10000, NToTest, 5);
