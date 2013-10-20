@@ -11,7 +11,6 @@ public class Main {
 
 	private static final int masterPort = 4444;
 	private static int[] toSort = {1,4,2,5,3};
-	private static int N = 3;
 	
 	// where results are saved
 	private static long timeTakenTotal;// from master's prespective (including sending and receiving array)
@@ -40,7 +39,7 @@ public class Main {
 		int port = masterPort;
 		nodes = new Node[N];
 		for(int i = 0; i < N; i++){
-			nodes[i] = new Node(++port, masterHostname, masterPort, debuggingOn);
+			nodes[i] = new Node(++port, ++port, masterHostname, masterPort, debuggingOn);
 			nodes[i].start();
 		}
 		
@@ -141,10 +140,10 @@ public class Main {
 		
 		
 		runTest(20, NToTest, 5);
-		runTest(200, NToTest, 5);
-		runTest(2000, NToTest, 5);
-		runTest(10000, NToTest, 5);
-		runTest(20000, NToTest, 5);
-		runTest(40000, NToTest, 5);
+//		runTest(200, NToTest, 5);
+//		runTest(2000, NToTest, 5);
+//		runTest(10000, NToTest, 5);
+//		runTest(20000, NToTest, 5);
+//		runTest(40000, NToTest, 5);
 	}
 }

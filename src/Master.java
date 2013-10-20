@@ -25,6 +25,7 @@ public class Master extends Thread{
 	ServerSocket serverSocket;
 	Socket[] nodeSockets;
 	int[] nodePortnumbers;
+	int[] nodePortnumbers2;
 	String[] nodeHostnames;
 	PrintWriter[] nodeOut;
 	BufferedReader[] nodeIn; 
@@ -45,6 +46,7 @@ public class Master extends Thread{
 		this.nodeOut = new PrintWriter[N];
 		this.nodeIn = new BufferedReader[N];
 		this.nodePortnumbers = new int[N];
+		this.nodePortnumbers2 = new int[N];
 		this.nodeHostnames = new String[N];
 	}
 	
@@ -60,6 +62,7 @@ public class Master extends Thread{
 				nodeOut[numConnected] = new PrintWriter(nodeSockets[numConnected].getOutputStream(), true);
 				nodeIn[numConnected] = new BufferedReader(new InputStreamReader(nodeSockets[numConnected].getInputStream()));
 				nodePortnumbers[numConnected] = Integer.parseInt(nodeIn[numConnected].readLine()); // wait for the node to tell me their serverSocket portnumber
+				nodePortnumbers2[numConnected] = Integer.parseInt(nodeIn[numConnected].readLine()); // wait for the node to tell me their serverSocket portnumber2
 				nodeHostnames[numConnected] = nodeIn[numConnected].readLine().trim(); // wait for the node to tell me their hostname
 				numConnected++;
 				print("Received connection!");
@@ -74,7 +77,7 @@ public class Master extends Thread{
 			// tell all nodes about right neighbours
 			for(int i = 0; i < N - 1; i++){
 				print("Telling node " + i + " about right neighbour.");
-				String toSend = String.format("%d %s", nodePortnumbers[i+1], nodeHostnames[i+1]);
+				String toSend = String.format("%d %d %s", nodePortnumbers[i+1], nodePortnumbers[i+1], nodeHostnames[i+1]);
 				nodeOut[i].println(toSend);
 			}
 			
