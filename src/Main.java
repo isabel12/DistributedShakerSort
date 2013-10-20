@@ -24,8 +24,6 @@ public class Main {
 	 */
 	private static void start(int[] toSort, int N, boolean debuggingOn){	
 		
-		//System.out.println("N: " + N);
-		
 		// get master hostname
 		String masterHostname = "";
 		try {
@@ -49,9 +47,6 @@ public class Main {
 		// wait for master to finish and get result
 		try {
 			master.join();
-//			System.out.println(master.getTimeTaken() + "ms");
-//			System.out.println("node time: " + master.getLongestNodeTime() + "ms");
-//			System.out.println();
 			Main.timeTakenTotal = master.getTimeTaken();
 			Main.longestNodeTime = master.getLongestNodeTime();
 		} catch (InterruptedException e) {
@@ -127,8 +122,23 @@ public class Main {
 	 * @param args
 	 */
 	public static void main(String[] args){
-		
+		// defaults
+		int arraySize = 5;
 		int[] NToTest = {1,2,3,4,5}; // values of N to test at
+//		
+//		if(args.length > 0){
+//			arraySize = Integer.parseInt(args[0]);
+//			
+//			// get NToTest
+//
+//			int NToTestSize
+//			for(int i = 1; i < args.length; i++){
+//				
+//			}
+//		}
+//		
+		
+		
 		
 		runTest(20, NToTest, 5);
 		runTest(200, NToTest, 5);
