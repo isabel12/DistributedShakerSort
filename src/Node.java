@@ -14,10 +14,12 @@ import java.util.concurrent.Semaphore;
 public class Node extends Thread{
 	private boolean debuggingOn = true;
 
+	// my 'letterbox'
 	private ServerSocket serverSocket;
 	private ServerSocket serverSocket2;
 	int port;
 	int port2;
+
 	private int seqNum = -1;
 	private int N;
 	List<Integer> list;
@@ -45,8 +47,9 @@ public class Node extends Thread{
 
 	boolean done = false;
 
+
 	/**
-	 * Constructor
+	 * Constructor 
 	 * @param myPort
 	 * @param masterHost
 	 * @param masterPort
@@ -59,19 +62,24 @@ public class Node extends Thread{
 		this.port = myPort;
 		this.port2 = myPort2;
 		try {
+			// create serverSocket
 			this.serverSocket = new ServerSocket(myPort);
 			this.serverSocket2 = new ServerSocket(myPort2);
 			this.masterSocket = new Socket(masterHost, masterPort);
-		} catch (IOException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * This method connects to master, sets up for the sort, performs the sort, and returns the results to master.
+	 */
 	public void run(){
 		try{	
 			String fromServer;
-
+			
 			// connect to master
+			this.masterSocket = new Socket(masterHost, masterPort);
 			this.masterOut = new PrintWriter(masterSocket.getOutputStream(), true);
 			this.masterIn = new BufferedReader(new InputStreamReader(masterSocket.getInputStream()));
 
@@ -153,6 +161,8 @@ public class Node extends Thread{
 				serverSocket.close();
 				serverSocket2.close();
 				masterSocket.close();
+				masterIn.close();
+				masterOut.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -579,13 +589,17 @@ public class Node extends Thread{
 					}
 				} catch (IOException e) {
 					e.printStackTrace();
+
 				}
 			}
 		}
-	}
 
-
-
+	}	
+	
+	/**
+	 * A method to print debugging messages to the screen - will do nothing if the 'debuggingOn' field is false.
+	 * @param s
+	 */
 	private void print(String s){
 		if(!debuggingOn){
 			return;
@@ -599,6 +613,11 @@ public class Node extends Thread{
 		}
 	}
 
+	/**
+	 * Converts the current list to a String representation.
+	 * eg. "1 2 3 4 5 "
+	 * @return
+	 */
 	private String listToString(){
 		String s = "";
 		for(Integer i: list){
