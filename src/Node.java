@@ -13,8 +13,11 @@ import java.util.Scanner;
 public class Node extends Thread{
 	private boolean debuggingOn = false;
 
+	// my 'letterbox'
 	private ServerSocket serverSocket;
 	int port;
+	
+	// fields for the sort
 	private int seqNum = -1;
 	private int N;
 	List<Integer> list;
@@ -32,16 +35,10 @@ public class Node extends Thread{
 	int masterPort;
 	private Socket masterSocket;
 	private PrintWriter masterOut;
-	private BufferedReader masterIn;
-	
-	
-	
-	
-	
-	
+	private BufferedReader masterIn;	
 
 	/**
-	 * Constructor
+	 * Constructor 
 	 * @param myPort
 	 * @param masterHost
 	 * @param masterPort
@@ -53,18 +50,22 @@ public class Node extends Thread{
 		this.list = new ArrayList<Integer>();
 		this.port = myPort;
 		try {
+			// create serverSocket
 			this.serverSocket = new ServerSocket(myPort);
-			this.masterSocket = new Socket(masterHost, masterPort);
-		} catch (IOException e) {
+		} catch (Exception e){
 			e.printStackTrace();
 		}
 	}
 
+	/**
+	 * This method connects to master, sets up for the sort, performs the sort, and returns the results to master.
+	 */
 	public void run(){
 		try{	
 			String fromServer;
-
+			
 			// connect to master
+			this.masterSocket = new Socket(masterHost, masterPort);
 			this.masterOut = new PrintWriter(masterSocket.getOutputStream(), true);
 			this.masterIn = new BufferedReader(new InputStreamReader(masterSocket.getInputStream()));
 
@@ -146,11 +147,17 @@ public class Node extends Thread{
 				serverSocket.close();
 				if(leftSocket != null){
 					leftSocket.close();
+					leftIn.close();
+					leftOut.close();
 				}
 				if(rightSocket != null){
 					rightSocket.close();
+					rightIn.close();
+					rightOut.close();
 				}
 				masterSocket.close();
+				masterIn.close();
+				masterOut.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -310,7 +317,6 @@ public class Node extends Thread{
 					print(String.format("2d. received %d from node%d.", received, (seqNum-1)));
 				}
 
-
 				// At the bottom - see if sorted
 				//==============================
 				// the node at the start can tell if complete!
@@ -325,25 +331,12 @@ public class Node extends Thread{
 				swapHappened = false;
 			}
 		}
-	}
+	}	
 	
-	
-	private class SearchThread extends Thread{
-		
-		
-		
-		public void run(){
-			
-			
-			
-			
-		}
-		
-		
-	}
-	
-	
-	
+	/**
+	 * A method to print debugging messages to the screen - will do nothing if the 'debuggingOn' field is false.
+	 * @param s
+	 */
 	private void print(String s){
 		if(!debuggingOn){
 			return;
@@ -357,6 +350,11 @@ public class Node extends Thread{
 		}
 	}
 
+	/**
+	 * Converts the current list to a String representation.
+	 * eg. "1 2 3 4 5 "
+	 * @return
+	 */
 	private String listToString(){
 		String s = "";
 		for(Integer i: list){

@@ -10,24 +10,31 @@ import java.util.Scanner;
 public class Master extends Thread{
 	boolean debuggingOn;
 	
-	int[] toSort;
+	// my portnumber
+	int portnumber = 4444;
+	ServerSocket serverSocket;
+	
+	// results fields
 	String[] nodeResults;
 	String resultString;
-	int[] result;
-	
+	int[] result;	
 	long startTime;
 	long timeTakenMillis;
 	long longestNodeTime;
 	
+	// fields for sort
 	int N = 0;
-	int portnumber = 4444;
+	int[] toSort;
 	
-	ServerSocket serverSocket;
+	
+	// channels and info about nodes
 	Socket[] nodeSockets;
-	int[] nodePortnumbers;
-	String[] nodeHostnames;
 	PrintWriter[] nodeOut;
 	BufferedReader[] nodeIn; 
+	
+	int[] nodePortnumbers;
+	String[] nodeHostnames;
+
 	
 	/**
 	 * @param n - must be less than or equal to the size of the 'toSort' array.
@@ -35,6 +42,10 @@ public class Master extends Thread{
 	 * @param toSort
 	 */
 	public Master(int n, int portnumber, int[] toSort, boolean debuggingOn){
+		if(n > toSort.length){
+			throw new IllegalArgumentException("n must be less than or equal to the size of the 'toSort' array.");
+		}
+			
 		this.debuggingOn = debuggingOn;
 		this.toSort = toSort;
 		this.N = n;
@@ -84,7 +95,7 @@ public class Master extends Thread{
 			// wait for results		
 			int numResults = 0;
 			while(numResults < N){
-				print("Waiting for " + (N - numResults) + " nodes to respond...");
+				print("Waiting for " + (N - numResults) + " nodes to return results...");
 				Socket socket = serverSocket.accept();
 				BufferedReader nodeIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 				PrintWriter nodeOut = new PrintWriter(socket.getOutputStream(), true);
@@ -116,6 +127,8 @@ public class Master extends Thread{
 			for(int i = 0; i < N; i++){
 				resultString += nodeResults[i];
 			}
+			
+			print("sorted array: " + resultString);
 			
 			Scanner scan = new Scanner(resultString);
 			int index = 0;
@@ -156,10 +169,18 @@ public class Master extends Thread{
 		return this.longestNodeTime;
 	}
 	
+	/**
+	 * Returns the sorted array.
+	 * @return
+	 */
 	public int[] getResultArray(){
 		return this.result;
 	}
 	
+	/**
+	 * Returns a String representation of the sorted array.
+	 * @return
+	 */
 	public String getResultString(){
 		return this.resultString;
 	}
@@ -203,6 +224,10 @@ public class Master extends Thread{
 		}
 	}
 	
+	/**
+	 * Helper method to print debugging messages to console.  Does nothing if debuggingOn is false.
+	 * @param s
+	 */
 	private void print(String s){	
 		if(debuggingOn){
 			System.out.println("master: " + s);
