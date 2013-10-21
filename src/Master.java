@@ -73,6 +73,7 @@ public class Master extends Thread{
 				nodeSockets[numConnected] = serverSocket.accept();
 				nodeOut[numConnected] = new PrintWriter(nodeSockets[numConnected].getOutputStream(), true);
 				nodeIn[numConnected] = new BufferedReader(new InputStreamReader(nodeSockets[numConnected].getInputStream()));
+				
 				nodePortnumbers[numConnected] = Integer.parseInt(nodeIn[numConnected].readLine()); // wait for the node to tell me their serverSocket portnumber
 				nodePortnumbers2[numConnected] = Integer.parseInt(nodeIn[numConnected].readLine()); // wait for the node to tell me their serverSocket portnumber2
 				nodeHostnames[numConnected] = nodeIn[numConnected].readLine().trim(); // wait for the node to tell me their hostname

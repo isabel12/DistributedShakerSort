@@ -1,6 +1,7 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -50,7 +51,26 @@ public class Main {
 
 		// wait for master to finish and get result
 		try {
-			master.join();
+			
+			while(master.isAlive()){
+				Thread.sleep(5000);
+				
+				Arrays.sort(nodes);
+				
+				System.out.println("Printing debugging statements");
+				System.out.println("-----------------------------");
+				for(Node n: nodes){
+					n.printDebuggingForThread1();
+					System.out.println();
+				}
+				System.out.println();
+				for(Node n: nodes){
+					n.printDebuggingForThread2();
+					System.out.println();
+				}		
+			}
+			
+//			master.join();
 			Main.timeTakenTotal = master.getTimeTaken();
 			Main.longestNodeTime = master.getLongestNodeTime();
 		} catch (InterruptedException e) {
@@ -80,7 +100,8 @@ public class Main {
 	 */
 	private static void runTest(int arraySize, int[] sizesOfNToTest, int numRepeats, boolean debuggingOn){
 		// generate array
-		int[] toSort = generateRandomArray(arraySize);
+		//int[] toSort = generateRandomArray(arraySize);
+		int[] toSort = new int[]{4,2,5,1,3};
 
 		System.out.println("Initiating test");
 		System.out.println("Array size: " + toSort.length);
@@ -132,80 +153,82 @@ public class Main {
 	 */
 	public static void main(String[] args){
 
-		try{
-			// defaults
-			int[] arraySize = new int[]{5};
-			int[] NToTest = {1,2,3,4,5};
-			int numRepeats = 5;
-			boolean debuggingOn = false;
+		// defaults
+		int[] arraySize = new int[]{5};
+		int[] NToTest = {3};
+		int numRepeats = 1;
+		boolean debuggingOn = true;
+		
+//		try{
 
-			// parse arguments if there are any
-			if(args.length > 0){		
-				for(int i = 0; i < args.length; i++){
-
-					String arg = args[i].toLowerCase();
-
-					if(arg.startsWith("arraysize=")){
-						arg = arg.replace("arraysize=", "");
-						arraySize[0] = Integer.parseInt(arg);		
-					} else if (arg.startsWith("n=")){
-						arg = arg.replace("n=", "");
-						NToTest = new int[]{Integer.parseInt(arg)};
-					} else if (arg.startsWith("numrepeats=")){
-						arg = arg.replace("numrepeats=", "");
-						numRepeats = Integer.parseInt(arg);
-					} else if (arg.startsWith("debuggingon=")){
-						arg = arg.replace("debuggingon=", "");
-						debuggingOn = Boolean.parseBoolean(arg);
-					}			
-				}
-			}
-
-			// otherwise ask for details
-			else{
-				Scanner sc = new Scanner(System.in);
-
-				// get array sizes
-				System.out.print("Please enter array sizes to test separated by spaces: ");
-
-				String input = sc.nextLine().trim();
-				String[] arraySizeString = input.split(" ");
-				arraySize = new int[arraySizeString.length];
-				for(int i = 0; i < arraySizeString.length; i++){
-					arraySize[i] = Integer.parseInt(arraySizeString[i]);
-				}
-
-				// get NToTest
-				System.out.print("Please enter values of N to test separated by spaces: ");
-				input = sc.nextLine().trim();
-				String[] NToTestString = input.split(" ");
-				NToTest = new int[NToTestString.length];
-				for(int i = 0; i < NToTestString.length; i++){
-					NToTest[i] = Integer.parseInt(NToTestString[i]);
-				}
-
-				// get numRepeats
-				System.out.print("Please enter the number of times to repeat the test: ");
-				input = sc.nextLine();
-				numRepeats = Integer.parseInt(input);
-
-				// debugging?
-				System.out.print("Debugging on? (y/n): ");
-				input = sc.nextLine().toLowerCase();
-				if(input.startsWith("y")){
-					debuggingOn = true;
-				}				
-			}
+//
+//			// parse arguments if there are any
+//			if(args.length > 0){		
+//				for(int i = 0; i < args.length; i++){
+//
+//					String arg = args[i].toLowerCase();
+//
+//					if(arg.startsWith("arraysize=")){
+//						arg = arg.replace("arraysize=", "");
+//						arraySize[0] = Integer.parseInt(arg);		
+//					} else if (arg.startsWith("n=")){
+//						arg = arg.replace("n=", "");
+//						NToTest = new int[]{Integer.parseInt(arg)};
+//					} else if (arg.startsWith("numrepeats=")){
+//						arg = arg.replace("numrepeats=", "");
+//						numRepeats = Integer.parseInt(arg);
+//					} else if (arg.startsWith("debuggingon=")){
+//						arg = arg.replace("debuggingon=", "");
+//						debuggingOn = Boolean.parseBoolean(arg);
+//					}			
+//				}
+//			}
+//
+//			// otherwise ask for details
+//			else{
+//				Scanner sc = new Scanner(System.in);
+//
+//				// get array sizes
+//				System.out.print("Please enter array sizes to test separated by spaces: ");
+//
+//				String input = sc.nextLine().trim();
+//				String[] arraySizeString = input.split(" ");
+//				arraySize = new int[arraySizeString.length];
+//				for(int i = 0; i < arraySizeString.length; i++){
+//					arraySize[i] = Integer.parseInt(arraySizeString[i]);
+//				}
+//
+//				// get NToTest
+//				System.out.print("Please enter values of N to test separated by spaces: ");
+//				input = sc.nextLine().trim();
+//				String[] NToTestString = input.split(" ");
+//				NToTest = new int[NToTestString.length];
+//				for(int i = 0; i < NToTestString.length; i++){
+//					NToTest[i] = Integer.parseInt(NToTestString[i]);
+//				}
+//
+//				// get numRepeats
+//				System.out.print("Please enter the number of times to repeat the test: ");
+//				input = sc.nextLine();
+//				numRepeats = Integer.parseInt(input);
+//
+//				// debugging?
+//				System.out.print("Debugging on? (y/n): ");
+//				input = sc.nextLine().toLowerCase();
+//				if(input.startsWith("y")){
+//					debuggingOn = true;
+//				}				
+//			}
 
 			// run tests
 			for(int size: arraySize){
 				runTest(size, NToTest, numRepeats, debuggingOn);	
 			}
 
-		} catch (Exception e){
-			System.out.println(e.getMessage());
-			System.out.println("Error parsing arguments. Exiting.");
-			System.exit(0);
-		}
+//		} catch (Exception e){
+//			System.out.println(e.getMessage());
+//			System.out.println("Error parsing arguments. Exiting.");
+//			System.exit(0);
+//		}
 	}
 }
