@@ -134,11 +134,11 @@ public class Node extends Thread implements Comparable<Node>{
 
 
 			SearchThread search1 = new SearchThread(false, serverSocket, port, host);
-			SearchThread search2 = new SearchThread(true, serverSocket2, port2, host);
+			//SearchThread search2 = new SearchThread(true, serverSocket2, port2, host);
 			search1.start();
-			search2.start();
+			//search2.start();
 			search1.join();	
-			search2.join();
+			//search2.join();
 
 			long timeTaken = System.currentTimeMillis() - startTime;
 
@@ -260,10 +260,11 @@ public class Node extends Thread implements Comparable<Node>{
 								print(String.format("1a. received %d %b from node%d.", received, swapHappened, (seqNum-1)), startAtTop);
 
 								// if will swap
-								print("acquiring list...", startAtTop);
-								listSem.acquire();
-								print("acquired list.", startAtTop);
 								if(received > list.get(0)){ 
+									print("acquiring list...", startAtTop);
+									listSem.acquire();
+									print("acquired list.", startAtTop);
+													
 									swapHappened = true;
 									int sent = list.remove(0);  // swap for your lowest
 									leftOut.println(sent + ""); // send reply
@@ -272,14 +273,16 @@ public class Node extends Thread implements Comparable<Node>{
 
 									list.add(received);
 									Collections.sort(list);  // sort my array again
+									
+									listSem.release();
+									print("released list.", startAtTop);
 								}
 								// otherwise no swap
 								else {
 									print(String.format("1b. sending reply %d to node%d, no swap.", received, (seqNum-1)), startAtTop);
 									leftOut.println(received + ""); // send reply
 								}
-								listSem.release();
-								print("released list.", startAtTop);
+
 							}	
 
 							// 1c,d. send highest right, receive reply
@@ -304,7 +307,8 @@ public class Node extends Thread implements Comparable<Node>{
 								if(list.isEmpty()){
 									list.add(received);
 								} else {
-									list.add(list.size()-1, received); // add to the end
+									list.add(list.size(), received); // add to the end
+									print(listToString() + "will sort: " + (sent != received), startAtTop);
 								}
 								if(sent != received){
 									Collections.sort(list); // sort if received a new value
@@ -406,6 +410,7 @@ public class Node extends Thread implements Comparable<Node>{
 								scan = new Scanner(leftIn.readLine());
 								int received = scan.nextInt();
 								list.add(0, received); // put at start
+								print(listToString() + "will sort: " + (sent != received), startAtTop);
 								if(sent != received){
 									Collections.sort(list); // sort if we received a different value
 								}
