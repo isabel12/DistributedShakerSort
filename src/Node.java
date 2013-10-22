@@ -50,8 +50,10 @@ public class Node extends Thread implements Comparable<Node>{
 	//	private PrintWriter rightOut;
 	//	private BufferedReader rightIn;
 
-	Semaphore sem = new Semaphore(1);
-	Semaphore threadSynchSem = new Semaphore(0, true);
+
+	AtomicBoolean avail = new AtomicBoolean(true);
+	Semaphore waitForPermission = new Semaphore(0);
+	
 	boolean done = false;
 
 
@@ -251,8 +253,26 @@ public class Node extends Thread implements Comparable<Node>{
 								print("1a. receiving from left...", startAtTop);
 								scan = new Scanner(leftIn.readLine());
 								
+								// check for exit signal
+								if(!scan.hasNextInt()){ 
+									print("1a. received done signal from node" + (seqNum - 1), startAtTop);
+									done = true;
+									if(seqNum < N-1){ // pass on if not at the end
+										rightOut.println("d");
+									}
+									continue;
+								}
+								
+								
+//								print("acquiring sem.", startAtTop);
+//								sem.acquire();
+//								print("acquired sem.", startAtTop);
+								
+								// acquire
 								print("acquiring sem.", startAtTop);
-								sem.acquire();
+								if(!avail.getAndSet(false)){
+									waitForPermission.acquire();
+								}
 								print("acquired sem.", startAtTop);
 
 								// check for exit signal
@@ -290,16 +310,27 @@ public class Node extends Thread implements Comparable<Node>{
 									leftOut.println(received + ""); // send reply
 								}
 								
-								sem.release();
-								print("released sem.", startAtTop);
+//								sem.release();
+//								print("released sem.", startAtTop);
+								
+								// release
+								print("releasing sem.", startAtTop);
+								avail.set(true);
+								wait.release();
 							}	
 
 
 							// 1c,d. send highest right, receive reply
 							//--------------------------------------
 							
+//							print("acquiring sem.", startAtTop);
+//							sem.acquire();
+//							print("acquired sem.", startAtTop);
+							// acquire
 							print("acquiring sem.", startAtTop);
-							sem.acquire();
+							if(!avail.getAndSet(false)){
+								waitForPermission.acquire();
+							}
 							print("acquired sem.", startAtTop);
 							
 							if(seqNum < N - 1){ // all except the last node
@@ -328,8 +359,13 @@ public class Node extends Thread implements Comparable<Node>{
 								}								
 							}
 							
-							sem.release();
-							print("released sem.", startAtTop);
+//							sem.release();
+//							print("released sem.", startAtTop);
+							
+							// release
+							print("releasing sem.", startAtTop);
+							avail.set(true);
+							wait.release();
 
 							// At the top - see if sorted
 							//===========================
@@ -342,14 +378,7 @@ public class Node extends Thread implements Comparable<Node>{
 							}	
 							
 							// wait for other thread to finish before you switch
-							if(seqNum == N - 1){
-//								if(threadSynchSem.hasQueuedThreads()){
-//									print("waking other thread.", startAtTop);
-//									threadSynchSem.release();
-//								} else{
-//									print("waiting for other thread to finish.", startAtTop);
-//									threadSynchSem.acquire();
-//								}							
+							if(seqNum == N - 1){							
 								if(waiting.getAndSet(true)){
 									print("waking othre thread.", startAtTop);
 									waiting.set(false);
@@ -377,8 +406,15 @@ public class Node extends Thread implements Comparable<Node>{
 								print("2a. receiving from right...", startAtTop);
 								scan = new Scanner(rightIn.readLine());
 
+//								print("acquiring sem.", startAtTop);
+//								sem.acquire();
+//								print("acquired sem.", startAtTop);
+								
+								// acquire
 								print("acquiring sem.", startAtTop);
-								sem.acquire();
+								if(!avail.getAndSet(false)){
+									waitForPermission.acquire();
+								}
 								print("acquired sem.", startAtTop);
 								
 								// check for exit signal
@@ -414,14 +450,26 @@ public class Node extends Thread implements Comparable<Node>{
 									print(String.format("2b. sending reply %d to node%d, no swap.", received, (seqNum+1)), startAtTop);
 								}
 								
-								sem.release();
+//								sem.release();
+//								print("releasing sem.", startAtTop);
+								
+								// release
 								print("releasing sem.", startAtTop);
+								avail.set(true);
+								wait.release();
 							}
 							
 							// 2c,d. send lowest left and wait for a reply from left
 							//----------------------------------------------------
+//							print("acquiring sem.", startAtTop);
+//							sem.acquire();
+//							print("acquired sem.", startAtTop);
+							
+							// acquire
 							print("acquiring sem.", startAtTop);
-							sem.acquire();
+							if(!avail.getAndSet(false)){
+								waitForPermission.acquire();
+							}
 							print("acquired sem.", startAtTop);
 							
 							if(seqNum != 0){ // all except the first node
@@ -445,8 +493,14 @@ public class Node extends Thread implements Comparable<Node>{
 								print(String.format("2d. received %d from node%d.", received, (seqNum-1)), startAtTop);
 							}
 
-							sem.release();
+//							sem.release();
+//							print("releasing sem.", startAtTop);
+							
+							// release
 							print("releasing sem.", startAtTop);
+							avail.set(true);
+							wait.release();
+							
 							
 							// At the bottom - see if sorted
 							//==============================
@@ -461,14 +515,7 @@ public class Node extends Thread implements Comparable<Node>{
 
 							
 							// wait for other thread to finish before you switch
-							if(seqNum == 0){
-//								if(threadSynchSem.hasQueuedThreads()){
-//									print("waking other thread.", startAtTop);
-//									threadSynchSem.release();
-//								} else{
-//									print("waiting for other thread to finish.", startAtTop);
-//									threadSynchSem.acquire();
-//								}								
+							if(seqNum == 0){							
 								if(waiting.getAndSet(true)){
 									print("waking othre thread.", startAtTop);
 									waiting.set(false);
