@@ -92,6 +92,13 @@ public class Master extends Thread{
 				print("Telling node " + i + " about right neighbour.");
 				String toSend = String.format("%d %d %s", nodePortnumbers[i+1], nodePortnumbers2[i+1], nodeHostnames[i+1]);
 				nodeOut[i].println(toSend);
+				
+				// also tell first node about end node of other thread
+				if(i == 0){
+					print("Telling node " + i + " about end node.");
+					toSend = String.format("%d %d %s", nodePortnumbers2[N-1], nodePortnumbers[N-1], nodeHostnames[N-1]);
+					nodeOut[i].println(toSend);	
+				}
 			}
 			
 			// initiate sort
