@@ -237,7 +237,6 @@ public class Node extends Thread implements Comparable<Node>{
 								
 				print("sort method started.", startAtTop);
 				
-	
 				boolean swapHappened = false;
 
 				if(!(leftSocket == null && rightSocket == null)){ // skip this if N = 1
@@ -269,11 +268,7 @@ public class Node extends Thread implements Comparable<Node>{
 //								print("acquired sem.", startAtTop);
 								
 								// acquire
-								print("acquiring sem.", startAtTop);
-								if(!avail.getAndSet(false)){
-									waitForPermission.acquire();
-								}
-								print("acquired sem.", startAtTop);
+								acquire();
 
 								// check for exit signal
 								if(!scan.hasNextInt()){ 
@@ -314,9 +309,7 @@ public class Node extends Thread implements Comparable<Node>{
 //								print("released sem.", startAtTop);
 								
 								// release
-								print("releasing sem.", startAtTop);
-								avail.set(true);
-								wait.release();
+								release();
 							}	
 
 
@@ -327,11 +320,7 @@ public class Node extends Thread implements Comparable<Node>{
 //							sem.acquire();
 //							print("acquired sem.", startAtTop);
 							// acquire
-							print("acquiring sem.", startAtTop);
-							if(!avail.getAndSet(false)){
-								waitForPermission.acquire();
-							}
-							print("acquired sem.", startAtTop);
+							acquire();
 							
 							if(seqNum < N - 1){ // all except the last node
 								// remove highest value
@@ -363,9 +352,7 @@ public class Node extends Thread implements Comparable<Node>{
 //							print("released sem.", startAtTop);
 							
 							// release
-							print("releasing sem.", startAtTop);
-							avail.set(true);
-							wait.release();
+							release();
 
 							// At the top - see if sorted
 							//===========================
@@ -411,11 +398,7 @@ public class Node extends Thread implements Comparable<Node>{
 //								print("acquired sem.", startAtTop);
 								
 								// acquire
-								print("acquiring sem.", startAtTop);
-								if(!avail.getAndSet(false)){
-									waitForPermission.acquire();
-								}
-								print("acquired sem.", startAtTop);
+								acquire();
 								
 								// check for exit signal
 								if(!scan.hasNextInt()){ 
@@ -454,9 +437,7 @@ public class Node extends Thread implements Comparable<Node>{
 //								print("releasing sem.", startAtTop);
 								
 								// release
-								print("releasing sem.", startAtTop);
-								avail.set(true);
-								wait.release();
+								release();
 							}
 							
 							// 2c,d. send lowest left and wait for a reply from left
@@ -466,11 +447,7 @@ public class Node extends Thread implements Comparable<Node>{
 //							print("acquired sem.", startAtTop);
 							
 							// acquire
-							print("acquiring sem.", startAtTop);
-							if(!avail.getAndSet(false)){
-								waitForPermission.acquire();
-							}
-							print("acquired sem.", startAtTop);
+							acquire();
 							
 							if(seqNum != 0){ // all except the first node
 								// remove lowest value
@@ -497,9 +474,7 @@ public class Node extends Thread implements Comparable<Node>{
 //							print("releasing sem.", startAtTop);
 							
 							// release
-							print("releasing sem.", startAtTop);
-							avail.set(true);
-							wait.release();
+							release();
 							
 							
 							// At the bottom - see if sorted
@@ -553,6 +528,21 @@ public class Node extends Thread implements Comparable<Node>{
 				}
 			}
 		}
+		
+		private void acquire() throws InterruptedException {
+			print("acquiring sem.", startAtTop);
+			if(!avail.getAndSet(false)){
+				waitForPermission.acquire();
+			}
+			print("acquired sem.", startAtTop);	
+		}
+		
+		private void release(){
+			print("releasing sem.", startAtTop);
+			avail.set(true);
+			wait.release();
+		}
+		
 
 	}	
 	
