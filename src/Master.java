@@ -90,7 +90,7 @@ public class Master extends Thread{
 			// tell all nodes about right neighbours
 			for(int i = 0; i < N - 1; i++){
 				print("Telling node " + i + " about right neighbour.");
-				String toSend = String.format("%d %d %s", nodePortnumbers[i+1], nodePortnumbers[i+1], nodeHostnames[i+1]);
+				String toSend = String.format("%d %d %s", nodePortnumbers[i+1], nodePortnumbers2[i+1], nodeHostnames[i+1]);
 				nodeOut[i].println(toSend);
 			}
 			

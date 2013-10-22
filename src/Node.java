@@ -11,9 +11,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Node extends Thread implements Comparable<Node>{
+	
+	private static AtomicBoolean waiting = new AtomicBoolean(false);
+	private static Semaphore wait = new Semaphore(0, true);
+	
+	
 	private boolean debuggingOn = true;
 	Map<String, List<String>> sortMessages = new HashMap<String, List<String>>();
 
@@ -43,7 +50,7 @@ public class Node extends Thread implements Comparable<Node>{
 	//	private PrintWriter rightOut;
 	//	private BufferedReader rightIn;
 
-	Semaphore listSem = new Semaphore(1, true);
+	Semaphore sem = new Semaphore(1);
 	Semaphore threadSynchSem = new Semaphore(0, true);
 	boolean done = false;
 
@@ -103,15 +110,16 @@ public class Node extends Thread implements Comparable<Node>{
 			sortMessages.put(String.format("t2node%d: ", seqNum), new ArrayList<String>());
 
 			// get right node info (from master) if not last in sequence
-			int port = -1;
-			int port2 = -1;
+			int rightPort = -1;
+			int rightPort2 = -1;
 			String host = null;
 			if(seqNum != N - 1){
 				print("Getting right node info from master.");			
 				fromServer = masterIn.readLine();
 				scan = new Scanner(fromServer);	
-				port = scan.nextInt();
-				port2 = scan.nextInt();
+				rightPort = scan.nextInt();
+				rightPort2 = scan.nextInt();
+				print(String.format("myPort: %d, myPort2: %d, rightPort: %d, rightPort2: %d", port, port2, rightPort, rightPort2));
 				host = scan.next();
 				scan.close();
 			}
@@ -133,12 +141,12 @@ public class Node extends Thread implements Comparable<Node>{
 			Collections.sort(list);
 
 
-			SearchThread search1 = new SearchThread(false, serverSocket, port, host);
-			//SearchThread search2 = new SearchThread(true, serverSocket2, port2, host);
+			SearchThread search1 = new SearchThread(false, serverSocket, rightPort, host);
+			SearchThread search2 = new SearchThread(true, serverSocket2, rightPort2, host);
 			search1.start();
-			//search2.start();
+			search2.start();
 			search1.join();	
-			//search2.join();
+			search2.join();
 
 			long timeTaken = System.currentTimeMillis() - startTime;
 
@@ -238,10 +246,14 @@ public class Node extends Thread implements Comparable<Node>{
 						if(!firstRound || (firstRound && !startAtTop)){
 
 							// 1a,b. receive highest from left, send reply
-							//------------------------------------------
+							//------------------------------------------			
 							if(seqNum != 0){ // the first node has already passed up
 								print("1a. receiving from left...", startAtTop);
 								scan = new Scanner(leftIn.readLine());
+								
+								print("acquiring sem.", startAtTop);
+								sem.acquire();
+								print("acquired sem.", startAtTop);
 
 								// check for exit signal
 								if(!scan.hasNextInt()){ 
@@ -261,9 +273,6 @@ public class Node extends Thread implements Comparable<Node>{
 
 								// if will swap
 								if(received > list.get(0)){ 
-									print("acquiring list...", startAtTop);
-									listSem.acquire();
-									print("acquired list.", startAtTop);
 													
 									swapHappened = true;
 									int sent = list.remove(0);  // swap for your lowest
@@ -274,27 +283,30 @@ public class Node extends Thread implements Comparable<Node>{
 									list.add(received);
 									Collections.sort(list);  // sort my array again
 									
-									listSem.release();
-									print("released list.", startAtTop);
 								}
 								// otherwise no swap
 								else {
 									print(String.format("1b. sending reply %d to node%d, no swap.", received, (seqNum-1)), startAtTop);
 									leftOut.println(received + ""); // send reply
 								}
-
+								
+								sem.release();
+								print("released sem.", startAtTop);
 							}	
+
 
 							// 1c,d. send highest right, receive reply
 							//--------------------------------------
+							
+							print("acquiring sem.", startAtTop);
+							sem.acquire();
+							print("acquired sem.", startAtTop);
+							
 							if(seqNum < N - 1){ // all except the last node
-
-								print("acquiring list...", startAtTop);
-								listSem.acquire();
-								print("acquired list.", startAtTop);
+								// remove highest value
+								int sent = list.remove(list.size() - 1);	
 								
 								// send highest value right
-								int sent = list.remove(list.size() - 1);		
 								print(String.format("1c. sending %d %b to node%d, awaiting reply.", sent, swapHappened, (seqNum+1)), startAtTop);
 								rightOut.println(sent + " " + swapHappened);
 
@@ -304,6 +316,7 @@ public class Node extends Thread implements Comparable<Node>{
 								scan = new Scanner(rightIn.readLine());
 								int received = scan.nextInt();
 								print(String.format("1d. received %d from node%d.", received, (seqNum+1)), startAtTop);
+															
 								if(list.isEmpty()){
 									list.add(received);
 								} else {
@@ -312,12 +325,11 @@ public class Node extends Thread implements Comparable<Node>{
 								}
 								if(sent != received){
 									Collections.sort(list); // sort if received a new value
-								}
-								
-								listSem.release();
-								print("released list.", startAtTop);
-								
+								}								
 							}
+							
+							sem.release();
+							print("released sem.", startAtTop);
 
 							// At the top - see if sorted
 							//===========================
@@ -329,16 +341,24 @@ public class Node extends Thread implements Comparable<Node>{
 								continue;
 							}	
 							
-//							// wait for other thread to finish before you switch
-//							if(seqNum == N - 1){
+							// wait for other thread to finish before you switch
+							if(seqNum == N - 1){
 //								if(threadSynchSem.hasQueuedThreads()){
 //									print("waking other thread.", startAtTop);
 //									threadSynchSem.release();
 //								} else{
 //									print("waiting for other thread to finish.", startAtTop);
 //									threadSynchSem.acquire();
-//								}
-//							}
+//								}							
+								if(waiting.getAndSet(true)){
+									print("waking othre thread.", startAtTop);
+									waiting.set(false);
+									wait.release();	
+								} else{
+									print("waiting for other thread to finish.", startAtTop);
+									wait.acquire();
+								}
+							}
 
 							// reset
 							swapHappened = false;
@@ -351,9 +371,16 @@ public class Node extends Thread implements Comparable<Node>{
 
 							// 2a. receive lowest from right, send reply right
 							//------------------------------------------------
+
+							
 							if(seqNum != N - 1){ // the last node has already passed down
+								print("2a. receiving from right...", startAtTop);
 								scan = new Scanner(rightIn.readLine());
 
+								print("acquiring sem.", startAtTop);
+								sem.acquire();
+								print("acquired sem.", startAtTop);
+								
 								// check for exit signal
 								if(!scan.hasNextInt()){ 
 									print("2a. received done signal from node" + (seqNum+1), startAtTop);
@@ -370,11 +397,7 @@ public class Node extends Thread implements Comparable<Node>{
 
 								print(String.format("2a. received %d %b from node%d.", received, swapHappened, (seqNum+1)), startAtTop);
 
-								// if will swap
-								print("acquiring list...", startAtTop);
-								listSem.acquire();
-								print("acquired list.", startAtTop);
-								
+								// if will swap								
 								if(received < list.get(list.size()-1)){ 
 									swapHappened = true;
 									int sent = list.remove(list.size()-1); // swap for your highest
@@ -390,25 +413,29 @@ public class Node extends Thread implements Comparable<Node>{
 									rightOut.println(received + ""); // send reply
 									print(String.format("2b. sending reply %d to node%d, no swap.", received, (seqNum+1)), startAtTop);
 								}
-								listSem.release();
-								print("released list.", startAtTop);
+								
+								sem.release();
+								print("releasing sem.", startAtTop);
 							}
-
-							// 2b. send lowest left and wait for a reply from left
+							
+							// 2c,d. send lowest left and wait for a reply from left
 							//----------------------------------------------------
-							print("acquiring list...", startAtTop);
-							listSem.acquire();
-							print("acquired list.", startAtTop);
+							print("acquiring sem.", startAtTop);
+							sem.acquire();
+							print("acquired sem.", startAtTop);
+							
 							if(seqNum != 0){ // all except the first node
-								// send lowest value left
+								// remove lowest value
 								int sent = list.remove(0);
-								leftOut.println(sent + " " + swapHappened);
 
+								// send lowest value left
 								print(String.format("2c. sending %d %b to node%d, awaiting reply.", sent, swapHappened, (seqNum-1)), startAtTop);
+								leftOut.println(sent + " " + swapHappened);
 
 								// receive highest value reply from left
 								scan = new Scanner(leftIn.readLine());
 								int received = scan.nextInt();
+								
 								list.add(0, received); // put at start
 								print(listToString() + "will sort: " + (sent != received), startAtTop);
 								if(sent != received){
@@ -417,9 +444,10 @@ public class Node extends Thread implements Comparable<Node>{
 
 								print(String.format("2d. received %d from node%d.", received, (seqNum-1)), startAtTop);
 							}
-							listSem.release();
-							print("released list.", startAtTop);
 
+							sem.release();
+							print("releasing sem.", startAtTop);
+							
 							// At the bottom - see if sorted
 							//==============================
 							// the node at the start can tell if complete!
@@ -430,17 +458,27 @@ public class Node extends Thread implements Comparable<Node>{
 								continue;
 							}
 
-//							// wait for other thread to finish before you switch
-//							if(seqNum == 0){
+
+							
+							// wait for other thread to finish before you switch
+							if(seqNum == 0){
 //								if(threadSynchSem.hasQueuedThreads()){
 //									print("waking other thread.", startAtTop);
 //									threadSynchSem.release();
 //								} else{
 //									print("waiting for other thread to finish.", startAtTop);
 //									threadSynchSem.acquire();
-//								}
-//							}
-
+//								}								
+								if(waiting.getAndSet(true)){
+									print("waking othre thread.", startAtTop);
+									waiting.set(false);
+									wait.release();	
+								} else{
+									print("waiting for other thread to finish.", startAtTop);
+									wait.acquire();
+								}
+							}
+							
 							// reset
 							swapHappened = false;
 							firstRound = false;
