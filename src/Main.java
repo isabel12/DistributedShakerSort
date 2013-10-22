@@ -100,8 +100,8 @@ public class Main {
 	 */
 	private static void runTest(int arraySize, int[] sizesOfNToTest, int numRepeats, boolean debuggingOn){
 		// generate array
-		//int[] toSort = generateRandomArray(arraySize);
-		int[] toSort = new int[]{4,2,5,1,3};
+		int[] toSort = generateRandomArray(arraySize);
+		//int[] toSort = new int[]{4,2,5,1,3};
 
 		System.out.println("Initiating test");
 		System.out.println("Array size: " + toSort.length);
@@ -154,7 +154,7 @@ public class Main {
 	public static void main(String[] args){
 
 		// defaults
-		int[] arraySize = new int[]{5};
+		int[] arraySize = new int[]{200};
 		int[] NToTest = {3};
 		int numRepeats = 1;
 		boolean debuggingOn = true;

@@ -17,9 +17,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Node extends Thread implements Comparable<Node>{
 	
-//	private static AtomicBoolean waiting = new AtomicBoolean(false);
-//	private static Semaphore wait = new Semaphore(0, true);
-	
 	private boolean debuggingOn = true;
 	Map<String, List<String>> sortMessages = new HashMap<String, List<String>>();
 
@@ -55,9 +52,6 @@ public class Node extends Thread implements Comparable<Node>{
 	 * @param masterPort
 	 */
 	public Node(int myPort, int myPort2, String masterHost, int masterPort, boolean debuggingOn){
-
-		
-		
 		this.masterHost = masterHost;
 		this.masterPort = masterPort;
 		this.debuggingOn = debuggingOn;
@@ -293,12 +287,7 @@ public class Node extends Thread implements Comparable<Node>{
 										done = true;
 										if(seqNum < N-1){ // pass on if not at the end
 											rightOut.println("d");
-										}
-										// wake up other thread
-										if(seqNum == 0 || seqNum == N-1){
-											endOut.println("w");
-										}
-										
+										}										
 										return;
 									}
 									
@@ -398,7 +387,7 @@ public class Node extends Thread implements Comparable<Node>{
 								leftOut.println("d");
 								// wake up other thread
 								if(seqNum == 0 || seqNum == N-1){ 
-									endOut.println("w");
+									endOut.println("d");
 								} 
 								return;
 							}	
@@ -407,15 +396,14 @@ public class Node extends Thread implements Comparable<Node>{
 							if(seqNum == N - 1){															
 								// wait for other thread to finish
 								print("waiting for other thread to finish.", startAtTop);
-								endOut.println("w");
-								endIn.readLine();
+								endOut.println("n");
+								String done = endIn.readLine();
 								print("woke up.", startAtTop);
 								
-								// if done, send message down
-								if(done){
+								// check if done, send message down
+								if(done.startsWith("d")){
 									print("done.", startAtTop);
 									leftOut.println("d");	
-									release();
 									return;
 								}
 								print("not done.", startAtTop);	
@@ -447,10 +435,6 @@ public class Node extends Thread implements Comparable<Node>{
 										if(seqNum > 0){ // pass on if not the start node
 											leftOut.println("d");
 										}
-										// wake up other thread
-										if(seqNum == 0 || seqNum == N-1){
-											endOut.println("w");
-										} 
 										return;
 									}
 									
@@ -543,7 +527,7 @@ public class Node extends Thread implements Comparable<Node>{
 								rightOut.println("d");
 								// wake up other thread
 								if(seqNum == 0 || seqNum == N-1){  
-									endOut.println("w");
+									endOut.println("d");
 								} 
 								return;
 							}
@@ -553,15 +537,14 @@ public class Node extends Thread implements Comparable<Node>{
 							if(seqNum == 0){															
 								// wait for other thread to finish
 								print("waiting for other thread to finish.", startAtTop);
-								endOut.println("w");
-								endIn.readLine();
+								endOut.println("n"); // say not done
+								String done = endIn.readLine();
 								print("woke up.", startAtTop);
 								
-								// if done, send message up								
-								if(done){
+								// check if done, send message down
+								if(done.startsWith("d")){
 									print("done.", startAtTop);
-									rightOut.println("d");	
-									release();
+									leftOut.println("d");	
 									return;
 								}
 								print("not done.", startAtTop);								
@@ -628,9 +611,6 @@ public class Node extends Thread implements Comparable<Node>{
 			System.out.println(String.format("node%d: ", seqNum) + s);
 		}
 	}
-	
-	
-
 	
 	/**
 	 * Print method for the different search threads to differentiate their messages.
