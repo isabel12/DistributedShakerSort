@@ -51,27 +51,32 @@ public class Main {
 
 		// wait for master to finish and get result
 		try {
-			
+
 			// print ordered debugging statements every 5 secs.
-			while(master.isAlive()){
-				Thread.sleep(5000);
-				
-				Arrays.sort(nodes);
-				
-				System.out.println();
-				System.out.println("Printing debugging statements by node");
-				System.out.println("-------------------------------------");
-				for(Node n: nodes){
-					n.printDebuggingForThread1();
+			if(debuggingOn){
+				while(master.isAlive()){
+					Thread.sleep(5000);
+
+					Arrays.sort(nodes);
+
+
 					System.out.println();
+					System.out.println("Printing debugging statements by node");
+					System.out.println("-------------------------------------");
+					for(Node n: nodes){
+						n.printDebuggingForThread1();
+						System.out.println();
+					}
+					System.out.println();
+					for(Node n: nodes){
+						n.printDebuggingForThread2();
+						System.out.println();
+					}	
 				}
-				System.out.println();
-				for(Node n: nodes){
-					n.printDebuggingForThread2();
-					System.out.println();
-				}		
+			} else {
+				master.join();
 			}
-			
+
 			Main.timeTakenTotal = master.getTimeTaken();
 			Main.longestNodeTime = master.getLongestNodeTime();
 		} catch (InterruptedException e) {
@@ -155,81 +160,79 @@ public class Main {
 	public static void main(String[] args){
 
 		// defaults
-		int[] arraySize = new int[]{10};
+		int[] arraySize = new int[]{5};
 		int[] NToTest = {3};
 		int numRepeats = 1;
 		boolean debuggingOn = true;
-		
-//		try{
 
-//
-//			// parse arguments if there are any
-//			if(args.length > 0){		
-//				for(int i = 0; i < args.length; i++){
-//
-//					String arg = args[i].toLowerCase();
-//
-//					if(arg.startsWith("arraysize=")){
-//						arg = arg.replace("arraysize=", "");
-//						arraySize[0] = Integer.parseInt(arg);		
-//					} else if (arg.startsWith("n=")){
-//						arg = arg.replace("n=", "");
-//						NToTest = new int[]{Integer.parseInt(arg)};
-//					} else if (arg.startsWith("numrepeats=")){
-//						arg = arg.replace("numrepeats=", "");
-//						numRepeats = Integer.parseInt(arg);
-//					} else if (arg.startsWith("debuggingon=")){
-//						arg = arg.replace("debuggingon=", "");
-//						debuggingOn = Boolean.parseBoolean(arg);
-//					}			
-//				}
-//			}
-//
-//			// otherwise ask for details
-//			else{
-//				Scanner sc = new Scanner(System.in);
-//
-//				// get array sizes
-//				System.out.print("Please enter array sizes to test separated by spaces: ");
-//
-//				String input = sc.nextLine().trim();
-//				String[] arraySizeString = input.split(" ");
-//				arraySize = new int[arraySizeString.length];
-//				for(int i = 0; i < arraySizeString.length; i++){
-//					arraySize[i] = Integer.parseInt(arraySizeString[i]);
-//				}
-//
-//				// get NToTest
-//				System.out.print("Please enter values of N to test separated by spaces: ");
-//				input = sc.nextLine().trim();
-//				String[] NToTestString = input.split(" ");
-//				NToTest = new int[NToTestString.length];
-//				for(int i = 0; i < NToTestString.length; i++){
-//					NToTest[i] = Integer.parseInt(NToTestString[i]);
-//				}
-//
-//				// get numRepeats
-//				System.out.print("Please enter the number of times to repeat the test: ");
-//				input = sc.nextLine();
-//				numRepeats = Integer.parseInt(input);
-//
-//				// debugging?
-//				System.out.print("Debugging on? (y/n): ");
-//				input = sc.nextLine().toLowerCase();
-//				if(input.startsWith("y")){
-//					debuggingOn = true;
-//				}				
-//			}
+		try{
+			// parse arguments if there are any
+			//			if(args.length > 0){		
+			//				for(int i = 0; i < args.length; i++){
+			//
+			//					String arg = args[i].toLowerCase();
+			//
+			//					if(arg.startsWith("arraysize=")){
+			//						arg = arg.replace("arraysize=", "");
+			//						arraySize[0] = Integer.parseInt(arg);		
+			//					} else if (arg.startsWith("n=")){
+			//						arg = arg.replace("n=", "");
+			//						NToTest = new int[]{Integer.parseInt(arg)};
+			//					} else if (arg.startsWith("numrepeats=")){
+			//						arg = arg.replace("numrepeats=", "");
+			//						numRepeats = Integer.parseInt(arg);
+			//					} else if (arg.startsWith("debuggingon=")){
+			//						arg = arg.replace("debuggingon=", "");
+			//						debuggingOn = Boolean.parseBoolean(arg);
+			//					}			
+			//				}
+			//			}
+
+			// otherwise ask for details
+			//			else{
+			//				Scanner sc = new Scanner(System.in);
+			//
+			//				// get array sizes
+			//				System.out.print("Please enter array sizes to test separated by spaces: ");
+			//
+			//				String input = sc.nextLine().trim();
+			//				String[] arraySizeString = input.split(" ");
+			//				arraySize = new int[arraySizeString.length];
+			//				for(int i = 0; i < arraySizeString.length; i++){
+			//					arraySize[i] = Integer.parseInt(arraySizeString[i]);
+			//				}
+			//
+			//				// get NToTest
+			//				System.out.print("Please enter values of N to test separated by spaces: ");
+			//				input = sc.nextLine().trim();
+			//				String[] NToTestString = input.split(" ");
+			//				NToTest = new int[NToTestString.length];
+			//				for(int i = 0; i < NToTestString.length; i++){
+			//					NToTest[i] = Integer.parseInt(NToTestString[i]);
+			//				}
+			//
+			//				// get numRepeats
+			//				System.out.print("Please enter the number of times to repeat the test: ");
+			//				input = sc.nextLine();
+			//				numRepeats = Integer.parseInt(input);
+			//
+			//				// debugging?
+			//				System.out.print("Debugging on? (y/n): ");
+			//				input = sc.nextLine().toLowerCase();
+			//				if(input.startsWith("y")){
+			//					debuggingOn = true;
+			//				}				
+			//			}
 
 			// run tests
 			for(int size: arraySize){
 				runTest(size, NToTest, numRepeats, debuggingOn);	
 			}
 
-//		} catch (Exception e){
-//			System.out.println(e.getMessage());
-//			System.out.println("Error parsing arguments. Exiting.");
-//			System.exit(0);
-//		}
+		} catch (Exception e){
+			System.out.println(e.getMessage());
+			System.out.println("Error parsing arguments. Exiting.");
+			System.exit(0);
+		}
 	}
 }
