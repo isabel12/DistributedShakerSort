@@ -358,12 +358,13 @@ public class Node extends Thread implements Comparable<Node>{
 									print(String.format("1b. sending reply %d to node%d, no swap.", received, (seqNum-1)), startAtTop);
 									leftOut.println(received + ""); // send reply
 								}
-
+								release();
 							}	
 
 							// 1c,d. send highest right, receive reply
 							//--------------------------------------	
 							if(seqNum < N - 1){ // all except the last node
+								acquire();
 								int sent;
 								while(true){
 
@@ -379,7 +380,7 @@ public class Node extends Thread implements Comparable<Node>{
 									scan = new Scanner(rightIn.readLine());
 
 									// if reset, reverse and go to back of permission 'queue'
-									if(!scan.hasNextInt()){
+									if(scan.hasNext("r")){
 										print("reset received.", startAtTop);
 										list.add(sent);	
 										release();
@@ -506,12 +507,13 @@ public class Node extends Thread implements Comparable<Node>{
 									rightOut.println(received + ""); // send reply
 									print(String.format("2b. sending reply %d to node%d, no swap.", received, (seqNum+1)), startAtTop);
 								}
+								release();
 							}
 
 							// 2c,d. send lowest left and wait for a reply from left
 							//----------------------------------------------------
 							if(seqNum != 0){ // all except the first node
-
+								acquire();
 								int sent;
 								while(true){
 									// remove lowest value
@@ -526,7 +528,7 @@ public class Node extends Thread implements Comparable<Node>{
 									scan = new Scanner(leftIn.readLine());
 
 									// if reset, reverse and go to back of permission 'queue'
-									if(!scan.hasNextInt()){
+									if(scan.hasNext("r")){
 										print("reset received.", startAtTop);
 										list.add(0, sent);	
 										release();

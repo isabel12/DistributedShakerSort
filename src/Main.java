@@ -155,8 +155,8 @@ public class Main {
 	public static void main(String[] args){
 
 		// defaults
-		int[] arraySize = new int[]{10};
-		int[] NToTest = {6};
+		int[] arraySize = new int[]{1000};
+		int[] NToTest = {3};
 		int numRepeats = 1;
 		boolean debuggingOn = true;
 		
