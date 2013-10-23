@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 
 public class Node extends Thread implements Comparable<Node>{
-
+	private boolean oneThreadOnly;
 	private boolean debuggingOn = true;
 	Map<String, List<String>> sortMessages = new HashMap<String, List<String>>();
 
@@ -48,7 +48,8 @@ public class Node extends Thread implements Comparable<Node>{
 	 * @param masterHost
 	 * @param masterPort
 	 */
-	public Node(int myPort, int myPort2, String masterHost, int masterPort, boolean debuggingOn){
+	public Node(int myPort, int myPort2, String masterHost, int masterPort, boolean debuggingOn, boolean oneThreadOnly){
+		this.oneThreadOnly = oneThreadOnly;
 		this.masterHost = masterHost;
 		this.masterPort = masterPort;
 		this.debuggingOn = debuggingOn;
@@ -142,13 +143,20 @@ public class Node extends Thread implements Comparable<Node>{
 
 			// create the search threads
 			SortThread search1 = new SortThread(false, serverSocket, rightPort, rightHost, endPort, endHost);
-			SortThread search2 = new SortThread(true, serverSocket2, rightPort2, rightHost, endPort2, endHost);
+			SortThread search2 = null;
+			if(!oneThreadOnly){
+				search2 = new SortThread(true, serverSocket2, rightPort2, rightHost, endPort2, endHost);
+			}
 			
 			// start search, and wait
 			search1.start();
-			search2.start();
+			if(!oneThreadOnly){
+				search2.start();
+			}
 			search1.join();	
-			search2.join();
+			if(!oneThreadOnly){
+				search2.join();
+			}
 			
 			long timeTaken = System.currentTimeMillis() - startTime;
 
@@ -172,12 +180,16 @@ public class Node extends Thread implements Comparable<Node>{
 			
 			// close the connections
 			search1.closeConnections();
-			search2.closeConnections();
+			if(!oneThreadOnly){
+				search2.closeConnections();
+			}
 			
 			// print number of traversals
 			if(seqNum == 0 || seqNum == N-1){
 				System.out.println("Search1 traversals: " + search1.numTraversals);
-				System.out.println("Search2 traversals: " + search2.numTraversals);
+				if(!oneThreadOnly){
+					System.out.println("Search2 traversals: " + search2.numTraversals);
+				}
 			}
 
 		} catch (Exception e){
@@ -272,22 +284,24 @@ public class Node extends Thread implements Comparable<Node>{
 					print("Connected to left!", startAtTop);
 				}
 
-				// if first in sequence, connect to end
-				if(seqNum == 0){
-					print("Connecting to end node of other thread.", startAtTop);
-					this.endSocket = new Socket(endHost, endPort);
-					this.endOut = new PrintWriter(endSocket.getOutputStream(), true);
-					this.endIn = new BufferedReader(new InputStreamReader(endSocket.getInputStream()));
-					print("Connected to end!", startAtTop);
-				}
-
-				// if last in sequence, connect to start
-				if(seqNum == N - 1){
-					print("Connecting to start node of other thread.", startAtTop);
-					this.endSocket = serverSocket.accept();
-					this.endOut = new PrintWriter(endSocket.getOutputStream(), true);
-					this.endIn = new BufferedReader(new InputStreamReader(endSocket.getInputStream()));
-					print("Connected to start!", startAtTop);	
+				if(!oneThreadOnly){
+					// if first in sequence, connect to end
+					if(seqNum == 0){
+						print("Connecting to end node of other thread.", startAtTop);
+						this.endSocket = new Socket(endHost, endPort);
+						this.endOut = new PrintWriter(endSocket.getOutputStream(), true);
+						this.endIn = new BufferedReader(new InputStreamReader(endSocket.getInputStream()));
+						print("Connected to end!", startAtTop);
+					}
+	
+					// if last in sequence, connect to start
+					if(seqNum == N - 1){
+						print("Connecting to start node of other thread.", startAtTop);
+						this.endSocket = serverSocket.accept();
+						this.endOut = new PrintWriter(endSocket.getOutputStream(), true);
+						this.endIn = new BufferedReader(new InputStreamReader(endSocket.getInputStream()));
+						print("Connected to start!", startAtTop);	
+					}
 				}
 
 				print("sort method started.", startAtTop);
@@ -420,27 +434,29 @@ public class Node extends Thread implements Comparable<Node>{
 								print("at the top, sort is complete. Sending message down.", startAtTop);
 								leftOut.println("d");
 								// wake up other thread
-								if(seqNum == 0 || seqNum == N-1){ 
+								if(!oneThreadOnly && (seqNum == 0 || seqNum == N-1)){ 
 									endOut.println("d");
 								} 
 								return;
 							}	
 
-							// wait for other thread to finish before you switch
-							if(seqNum == N - 1){															
-								// wait for other thread to finish
-								print("waiting for other thread to finish.", startAtTop);
-								endOut.println("n");
-								String done = endIn.readLine();
-								print("woke up.", startAtTop);
-
-								// check if done, send message down
-								if(done.startsWith("d")){
-									print("done.", startAtTop);
-									leftOut.println("d");
-									return;
+							if(!oneThreadOnly){
+								// wait for other thread to finish before you switch
+								if(seqNum == N - 1){															
+									// wait for other thread to finish
+									print("waiting for other thread to finish.", startAtTop);
+									endOut.println("n");
+									String done = endIn.readLine();
+									print("woke up.", startAtTop);
+	
+									// check if done, send message down
+									if(done.startsWith("d")){
+										print("done.", startAtTop);
+										leftOut.println("d");
+										return;
+									}
+									print("not done.", startAtTop);	
 								}
-								print("not done.", startAtTop);	
 							}
 
 							// reset
@@ -563,28 +579,30 @@ public class Node extends Thread implements Comparable<Node>{
 								print("at the bottom, sort is complete. Sending message up.", startAtTop);
 								rightOut.println("d");
 								// wake up other thread
-								if(seqNum == 0 || seqNum == N-1){  
+								if(!oneThreadOnly && (seqNum == 0 || seqNum == N-1)){  
 									endOut.println("d");
 								} 
+								
 								return;
 							}
 
-
-							// wait for other thread to finish before you switch
-							if(seqNum == 0){															
-								// wait for other thread to finish
-								print("waiting for other thread to finish.", startAtTop);
-								endOut.println("n"); // say not done
-								String done = endIn.readLine();
-								print("woke up.", startAtTop);
-
-								// check if done, send message up
-								if(done.startsWith("d")){
-									print("done.", startAtTop);
-									rightOut.println("d");	
-									return;
+							if(!oneThreadOnly){
+								// wait for other thread to finish before you switch
+								if(seqNum == 0){															
+									// wait for other thread to finish
+									print("waiting for other thread to finish.", startAtTop);
+									endOut.println("n"); // say not done
+									String done = endIn.readLine();
+									print("woke up.", startAtTop);
+	
+									// check if done, send message up
+									if(done.startsWith("d")){
+										print("done.", startAtTop);
+										rightOut.println("d");	
+										return;
+									}
+									print("not done.", startAtTop);								
 								}
-								print("not done.", startAtTop);								
 							}
 
 							// reset
@@ -616,7 +634,7 @@ public class Node extends Thread implements Comparable<Node>{
 					rightIn.close();
 					rightOut.close();
 				}
-				if(endSocket != null){
+				if(!oneThreadOnly && endSocket != null){
 					print("closing end socket.", startAtTop );
 					endSocket.close();
 					endIn.close();

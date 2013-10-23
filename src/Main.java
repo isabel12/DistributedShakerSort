@@ -45,7 +45,7 @@ public class Main {
 		int port = masterPort;
 		Node[] nodes = new Node[N];
 		for(int i = 0; i < N; i++){
-			nodes[i] = new Node(++port, ++port, masterHostname, masterPort, debuggingOn);
+			nodes[i] = new Node(++port, ++port, masterHostname, masterPort, debuggingOn, false);
 			nodes[i].start();
 		}
 
@@ -155,7 +155,7 @@ public class Main {
 	public static void main(String[] args){
 
 		// defaults
-		int[] arraySize = new int[]{1000};
+		int[] arraySize = new int[]{10};
 		int[] NToTest = {3};
 		int numRepeats = 1;
 		boolean debuggingOn = true;
