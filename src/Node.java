@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -176,6 +177,12 @@ public class Node extends Thread implements Comparable<Node>{
 			// close the connections
 			search1.closeConnections();
 			search2.closeConnections();
+			
+			// print number of traversals
+			if(seqNum == 0 || seqNum == N-1){
+				System.out.println("Search1 traversals: " + search1.numTraversals);
+				System.out.println("Search2 traversals: " + search2.numTraversals);
+			}
 
 		} catch (Exception e){
 			e.printStackTrace();
@@ -212,6 +219,8 @@ public class Node extends Thread implements Comparable<Node>{
 	 *
 	 */
 	private class SortThread extends Thread{
+		
+		int numTraversals = 0;
 
 		boolean startAtTop;
 		ServerSocket serverSocket;
@@ -312,7 +321,9 @@ public class Node extends Thread implements Comparable<Node>{
 										done = true;
 										if(seqNum < N-1){ // pass on if not at the end
 											rightOut.println("d");
-										}	
+										} else {
+											numTraversals++;
+										}
 										//print("returning.", startAtTop);
 										return;
 									}
@@ -377,7 +388,8 @@ public class Node extends Thread implements Comparable<Node>{
 										print("reset received.", startAtTop);
 										list.add(sent);	
 										release();
-										Thread.sleep(2);
+										Random r = new Random();
+										Thread.sleep(r.nextInt(10));
 										acquire();
 									} else{
 										break;
@@ -402,6 +414,11 @@ public class Node extends Thread implements Comparable<Node>{
 
 							// At the top - see if sorted
 							//===========================
+							
+							if(seqNum == N-1){
+								numTraversals++;
+							}
+							
 							// the node at the end can tell if complete!
 							if(seqNum == N - 1 && !swapHappened){
 								print("at the top, sort is complete. Sending message down.", startAtTop);
@@ -427,7 +444,6 @@ public class Node extends Thread implements Comparable<Node>{
 								if(done.startsWith("d")){
 									print("done.", startAtTop);
 									leftOut.println("d");
-									//print("returning.", startAtTop);
 									return;
 								}
 								print("not done.", startAtTop);	
@@ -458,6 +474,8 @@ public class Node extends Thread implements Comparable<Node>{
 										done = true;
 										if(seqNum > 0){ // pass on if not the start node
 											leftOut.println("d");
+										} else {
+											numTraversals++;
 										}
 										return;
 									}
@@ -520,7 +538,8 @@ public class Node extends Thread implements Comparable<Node>{
 										print("reset received.", startAtTop);
 										list.add(0, sent);	
 										release();
-										Thread.sleep(2);
+										Random r = new Random();
+										Thread.sleep(r.nextInt(10));
 										acquire();
 									} else{
 										break;
@@ -541,6 +560,10 @@ public class Node extends Thread implements Comparable<Node>{
 
 							// At the bottom - see if sorted
 							//==============================
+							if(seqNum == 0){
+								numTraversals++;
+							}
+							
 							// the node at the start can tell if complete!
 							if(seqNum == 0 && !swapHappened){
 								print("at the bottom, sort is complete. Sending message up.", startAtTop);
@@ -562,11 +585,10 @@ public class Node extends Thread implements Comparable<Node>{
 								String done = endIn.readLine();
 								print("woke up.", startAtTop);
 
-								// check if done, send message down
+								// check if done, send message up
 								if(done.startsWith("d")){
 									print("done.", startAtTop);
-									leftOut.println("d");	
-									//print("returning.", startAtTop);
+									rightOut.println("d");	
 									return;
 								}
 								print("not done.", startAtTop);								
