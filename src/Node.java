@@ -184,14 +184,6 @@ public class Node extends Thread implements Comparable<Node>{
 				search2.closeConnections();
 			}
 			
-			// print number of traversals
-			if(seqNum == 0 || seqNum == N-1){
-				System.out.println("Search1 traversals: " + search1.numTraversals);
-				if(!oneThreadOnly){
-					System.out.println("Search2 traversals: " + search2.numTraversals);
-				}
-			}
-
 		} catch (Exception e){
 			e.printStackTrace();
 		} finally{
@@ -228,8 +220,6 @@ public class Node extends Thread implements Comparable<Node>{
 	 */
 	private class SortThread extends Thread{
 		
-		int numTraversals = 0;
-
 		boolean startAtTop;
 		ServerSocket serverSocket;
 		int rightPort;
@@ -330,9 +320,7 @@ public class Node extends Thread implements Comparable<Node>{
 										print("1a. received done signal from node" + (seqNum - 1), startAtTop);
 										if(seqNum < N-1){ // pass on if not at the end
 											rightOut.println("d");
-										} else {
-											numTraversals++;
-										}
+										} 
 										//print("returning.", startAtTop);
 										return;
 									}
@@ -424,11 +412,7 @@ public class Node extends Thread implements Comparable<Node>{
 
 							// At the top - see if sorted
 							//===========================
-							
-							if(seqNum == N-1){
-								numTraversals++;
-							}
-							
+														
 							// the node at the end can tell if complete!
 							if(seqNum == N - 1 && !swapHappened){
 								print("at the top, sort is complete. Sending message down.", startAtTop);
@@ -483,9 +467,7 @@ public class Node extends Thread implements Comparable<Node>{
 										print("2a. received done signal from node" + (seqNum+1), startAtTop);
 										if(seqNum > 0){ // pass on if not the start node
 											leftOut.println("d");
-										} else {
-											numTraversals++;
-										}
+										} 
 										return;
 									}
 
@@ -570,9 +552,6 @@ public class Node extends Thread implements Comparable<Node>{
 
 							// At the bottom - see if sorted
 							//==============================
-							if(seqNum == 0){
-								numTraversals++;
-							}
 							
 							// the node at the start can tell if complete!
 							if(seqNum == 0 && !swapHappened){
@@ -668,7 +647,6 @@ public class Node extends Thread implements Comparable<Node>{
 			avail.set(true);
 			waitForPermission.release();
 		}
-
 
 	}	
 
