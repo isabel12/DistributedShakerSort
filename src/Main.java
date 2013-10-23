@@ -156,7 +156,7 @@ public class Main {
 
 		// defaults
 		int[] arraySize = new int[]{10};
-		int[] NToTest = {4};
+		int[] NToTest = {6};
 		int numRepeats = 1;
 		boolean debuggingOn = true;
 		

@@ -42,10 +42,6 @@ public class Node extends Thread implements Comparable<Node>{
 	AtomicBoolean avail = new AtomicBoolean(true);
 	Semaphore waitForPermission = new Semaphore(0);
 
-	// when the search is complete
-	boolean done = false;
-
-
 	/**
 	 * Constructor 
 	 * @param myPort
@@ -299,7 +295,7 @@ public class Node extends Thread implements Comparable<Node>{
 				boolean swapHappened = false;
 
 				if(!(leftSocket == null && rightSocket == null)){ // skip this if N = 1
-					while(!done){
+					while(true){
 						// 1. the upwards pass
 						//=====================
 
@@ -316,9 +312,8 @@ public class Node extends Thread implements Comparable<Node>{
 									scan = new Scanner(leftIn.readLine());
 
 									// check for exit signal
-									if(!scan.hasNextInt()){ 
+									if(scan.hasNext("d")){ 
 										print("1a. received done signal from node" + (seqNum - 1), startAtTop);
-										done = true;
 										if(seqNum < N-1){ // pass on if not at the end
 											rightOut.println("d");
 										} else {
@@ -422,13 +417,11 @@ public class Node extends Thread implements Comparable<Node>{
 							// the node at the end can tell if complete!
 							if(seqNum == N - 1 && !swapHappened){
 								print("at the top, sort is complete. Sending message down.", startAtTop);
-								done = true;
 								leftOut.println("d");
 								// wake up other thread
 								if(seqNum == 0 || seqNum == N-1){ 
 									endOut.println("d");
 								} 
-								//print("returning.", startAtTop);
 								return;
 							}	
 
@@ -469,9 +462,8 @@ public class Node extends Thread implements Comparable<Node>{
 									scan = new Scanner(rightIn.readLine());
 
 									// check for exit signal
-									if(!scan.hasNextInt()){ 
+									if(scan.hasNext("d")){ 
 										print("2a. received done signal from node" + (seqNum+1), startAtTop);
-										done = true;
 										if(seqNum > 0){ // pass on if not the start node
 											leftOut.println("d");
 										} else {
@@ -567,7 +559,6 @@ public class Node extends Thread implements Comparable<Node>{
 							// the node at the start can tell if complete!
 							if(seqNum == 0 && !swapHappened){
 								print("at the bottom, sort is complete. Sending message up.", startAtTop);
-								done = true;
 								rightOut.println("d");
 								// wake up other thread
 								if(seqNum == 0 || seqNum == N-1){  
