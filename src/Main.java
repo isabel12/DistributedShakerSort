@@ -209,7 +209,9 @@ public class Main {
 				String input = sc.nextLine().toLowerCase();
 				if(input.startsWith("y")){
 					oneThreadOnly = false;
-				}	
+				} else {
+					oneThreadOnly = true;
+				}
 
 				// get array sizes
 				System.out.print("Please enter array sizes to test separated by spaces (I reccommend only one value under 800 for two threaded sort due to bugs): ");
