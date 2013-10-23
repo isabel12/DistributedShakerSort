@@ -109,29 +109,36 @@ public class Master extends Thread{
 			while(numResults < N){
 				print("Waiting for " + (N - numResults) + " nodes to return results...");
 				Socket socket = serverSocket.accept();
-				BufferedReader nodeIn = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-				PrintWriter nodeOut = new PrintWriter(socket.getOutputStream(), true);
+				BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+				PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 				
 				
 				// find out which node it is
-				int seqNum = Integer.parseInt(nodeIn.readLine());
+				int seqNum = Integer.parseInt(in.readLine());
+				
+				// save new connection
+				this.nodeIn[seqNum] = in;
+				this.nodeOut[seqNum] = out;
 				
 				// get their result
-				String result = nodeIn.readLine();
+				String result = in.readLine();
 				nodeResults[seqNum] = result;
 				
 				// get how long it took
-				long time = Long.parseLong(nodeIn.readLine());
+				long time = Long.parseLong(in.readLine());
 				if(time > longestNodeTime){
 					longestNodeTime = time;
 				}
-						
-				// send reply
-				nodeOut.println();
 				
 				numResults++;
 				print("Received result from node" + seqNum);
-
+			}
+			
+		
+			// tell all nodes finished
+			print("Telling nodes to shut down.");
+			for(PrintWriter out: this.nodeOut ){
+				out.println();
 			}
 			
 			// compile results

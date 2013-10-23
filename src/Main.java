@@ -52,13 +52,15 @@ public class Main {
 		// wait for master to finish and get result
 		try {
 			
+			// print ordered debugging statements every 5 secs.
 			while(master.isAlive()){
 				Thread.sleep(5000);
 				
 				Arrays.sort(nodes);
 				
-				System.out.println("Printing debugging statements");
-				System.out.println("-----------------------------");
+				System.out.println();
+				System.out.println("Printing debugging statements by node");
+				System.out.println("-------------------------------------");
 				for(Node n: nodes){
 					n.printDebuggingForThread1();
 					System.out.println();
@@ -70,7 +72,6 @@ public class Main {
 				}		
 			}
 			
-//			master.join();
 			Main.timeTakenTotal = master.getTimeTaken();
 			Main.longestNodeTime = master.getLongestNodeTime();
 		} catch (InterruptedException e) {
@@ -154,7 +155,7 @@ public class Main {
 	public static void main(String[] args){
 
 		// defaults
-		int[] arraySize = new int[]{200};
+		int[] arraySize = new int[]{10};
 		int[] NToTest = {3};
 		int numRepeats = 1;
 		boolean debuggingOn = true;
